@@ -40,10 +40,11 @@ class BaseCoordinator(object):
     def _handle_metadata_update(self, cluster):
         subscription = self._subscription
         if subscription.subscribed_pattern:
-            topics = []
-            for topic in cluster.topics(self._exclude_internal_topics):
-                if subscription.subscribed_pattern.match(topic):
-                    topics.append(topic)
+            topics = [
+                topic
+                for topic in cluster.topics(self._exclude_internal_topics)
+                if subscription.subscribed_pattern.match(topic)
+            ]
 
             if subscription.subscription is None or \
                     set(topics) != subscription.subscription.topics:
@@ -342,8 +343,7 @@ class GroupCoordinator(BaseCoordinator):
         await self._maybe_leave_group()
 
     def maybe_leave_group(self):
-        task = create_task(self._maybe_leave_group())
-        return task
+        return create_task(self._maybe_leave_group())
 
     async def _maybe_leave_group(self):
         if self.generation > 0:
@@ -430,10 +430,7 @@ class GroupCoordinator(BaseCoordinator):
         # so we force a snapshot update.
         self._metadata_snapshot = self._get_metadata_snapshot()
 
-        group_assignment = {}
-        for member_id, assignment in assignments.items():
-            group_assignment[member_id] = assignment
-        return group_assignment
+        return {member_id: assignment for member_id, assignment in assignments.items()}
 
     async def _on_join_complete(
         self, generation, member_id, protocol,
@@ -530,13 +527,12 @@ class GroupCoordinator(BaseCoordinator):
                     raise err
                 except Errors.KafkaError as err:
                     log.error("Group Coordinator Request failed: %s", err)
-                    if err.retriable:
-                        await self._client.force_metadata_update()
-                        await asyncio.sleep(retry_backoff)
-                        continue
-                    else:
+                    if not err.retriable:
                         raise
 
+                    await self._client.force_metadata_update()
+                    await asyncio.sleep(retry_backoff)
+                    continue
                 # Try to connect to confirm that the connection can be
                 # established.
                 ready = await self._client.ready(
@@ -909,13 +905,12 @@ class GroupCoordinator(BaseCoordinator):
                         assignment, assignment.all_consumed_offsets())
             except Errors.KafkaError as error:
                 log.warning("Auto offset commit failed: %s", error)
-                if self._is_commit_retriable(error):
-                    # Retry after backoff.
-                    self._next_autocommit_deadline = \
-                        time.monotonic() + backoff
-                    return backoff
-                else:
+                if not self._is_commit_retriable(error):
                     raise
+                # Retry after backoff.
+                self._next_autocommit_deadline = \
+                    time.monotonic() + backoff
+                return backoff
             # If we had an unrecoverable error we expect the user to handle it
             # from another source (say Fetcher, like authorization errors).
             self._next_autocommit_deadline = now + interval

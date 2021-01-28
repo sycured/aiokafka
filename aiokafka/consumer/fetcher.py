@@ -37,12 +37,11 @@ class OffsetResetStrategy:
             return cls.LATEST
         if name == "earliest":
             return cls.EARLIEST
-        if name == "none":
-            return cls.NONE
-        else:
+        if name != "none":
             log.warning(
                 'Unrecognized ``auto_offset_reset`` config, using NONE')
-            return cls.NONE
+
+        return cls.NONE
 
     @classmethod
     def to_str(cls, value):
@@ -219,9 +218,10 @@ class PartitionRecords:
                     next_batch.producer_id is not None:
                 self._consume_aborted_up_to(next_batch.base_offset)
 
-                if next_batch.is_control_batch:
-                    if self._contains_abort_marker(next_batch):
-                        self._aborted_producers.remove(next_batch.producer_id)
+                if next_batch.is_control_batch and self._contains_abort_marker(
+                    next_batch
+                ):
+                    self._aborted_producers.remove(next_batch.producer_id)
 
                 if next_batch.is_transactional and \
                         next_batch.producer_id in self._aborted_producers:
@@ -927,11 +927,11 @@ class Fetcher:
                     (partition.partition, timestamp)
                 )
 
-        futs = []
-        for node_id, topic_data in timestamps_by_node.items():
-            futs.append(
-                self._proc_offset_request(node_id, topic_data)
-            )
+        futs = [
+            self._proc_offset_request(node_id, topic_data)
+            for node_id, topic_data in timestamps_by_node.items()
+        ]
+
         offsets = {}
         res = await asyncio.gather(*futs)
         for partial_offsets in res:
@@ -1029,12 +1029,11 @@ class Fetcher:
                 res_or_error = self._records[tp]
                 if type(res_or_error) == FetchResult:
                     message = res_or_error.getone()
-                    if message is None:
-                        # We already processed all messages, request new ones
-                        del self._records[tp]
-                        self._notify(self._wait_consume_future)
-                    else:
+                    if message is not None:
                         return message
+                    # We already processed all messages, request new ones
+                    del self._records[tp]
+                    self._notify(self._wait_consume_future)
                 else:
                     # Remove error, so we can fetch on partition again
                     del self._records[tp]
@@ -1083,11 +1082,10 @@ class Fetcher:
                     # return them. We will raise this error on next call
                     if drained:
                         return drained
-                    else:
-                        # Remove error, so we can fetch on partition again
-                        del self._records[tp]
-                        self._notify(self._wait_consume_future)
-                        res_or_error.check_raise()
+                    # Remove error, so we can fetch on partition again
+                    del self._records[tp]
+                    self._notify(self._wait_consume_future)
+                    res_or_error.check_raise()
 
             if drained or not timeout:
                 return drained

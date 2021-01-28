@@ -38,9 +38,8 @@ def run_until_complete(fun):
     def wrapper(test, *args, **kw):
         loop = test.loop
         timeout = getattr(test, "TEST_TIMEOUT", 120)
-        ret = loop.run_until_complete(
+        return loop.run_until_complete(
             asyncio.wait_for(fun(test, *args, **kw), timeout))
-        return ret
     return wrapper
 
 
@@ -359,7 +358,7 @@ class KafkaIntegrationTestCase(unittest.TestCase):
 
     async def wait_topic(self, client, topic):
         client.add_topic(topic)
-        for i in range(5):
+        for _ in range(5):
             ok = await client.force_metadata_update()
             if ok:
                 ok = topic in client.cluster.topics()

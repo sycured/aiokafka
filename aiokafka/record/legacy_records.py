@@ -187,10 +187,7 @@ class _LegacyRecordBatchPy(LegacyRecordBase):
         return key, value
 
     def __iter__(self):
-        if self._magic == 1:
-            key_offset = self.KEY_OFFSET_V1
-        else:
-            key_offset = self.KEY_OFFSET_V0
+        key_offset = self.KEY_OFFSET_V1 if self._magic == 1 else self.KEY_OFFSET_V0
         timestamp_type = self.timestamp_type
 
         if self.compression_type:
@@ -392,33 +389,33 @@ class _LegacyRecordBatchBuilderPy(LegacyRecordBase):
         return crc
 
     def _maybe_compress(self):
-        if self._compression_type:
-            buf = self._buffer
-            if self._compression_type == self.CODEC_GZIP:
-                compressed = gzip_encode(buf)
-            elif self._compression_type == self.CODEC_SNAPPY:
-                compressed = snappy_encode(buf)
-            elif self._compression_type == self.CODEC_LZ4:
-                if self._magic == 0:
-                    compressed = lz4_encode_old_kafka(bytes(buf))
-                else:
-                    compressed = lz4_encode(bytes(buf))
-            elif self._compression_type == self.CODEC_ZSTD:
-                compressed = zstd_encode(buf)
-            compressed_size = len(compressed)
-            size = self._size_in_bytes(key_size=0, value_size=compressed_size)
-            if size > len(self._buffer):
-                self._buffer = bytearray(size)
+        if not self._compression_type:
+            return False
+        buf = self._buffer
+        if self._compression_type == self.CODEC_GZIP:
+            compressed = gzip_encode(buf)
+        elif self._compression_type == self.CODEC_SNAPPY:
+            compressed = snappy_encode(buf)
+        elif self._compression_type == self.CODEC_LZ4:
+            if self._magic == 0:
+                compressed = lz4_encode_old_kafka(bytes(buf))
             else:
-                del self._buffer[size:]
-            self._encode_msg(
-                self._buffer,
-                offset=0, timestamp=0, key_size=0, key=None,
-                value_size=compressed_size, value=compressed,
-                attributes=self._compression_type)
-            self._pos = size
-            return True
-        return False
+                compressed = lz4_encode(bytes(buf))
+        elif self._compression_type == self.CODEC_ZSTD:
+            compressed = zstd_encode(buf)
+        compressed_size = len(compressed)
+        size = self._size_in_bytes(key_size=0, value_size=compressed_size)
+        if size > len(self._buffer):
+            self._buffer = bytearray(size)
+        else:
+            del self._buffer[size:]
+        self._encode_msg(
+            self._buffer,
+            offset=0, timestamp=0, key_size=0, key=None,
+            value_size=compressed_size, value=compressed,
+            attributes=self._compression_type)
+        self._pos = size
+        return True
 
     def build(self):
         """Compress batch to be ready for send"""

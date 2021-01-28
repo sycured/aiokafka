@@ -73,19 +73,19 @@ class Benchmark:
         transaction_size = self.transaction_size
 
         try:
-            if not self._is_transactional:
-                for i in range(self._num):
-                    # payload[i % self._size] = random.randint(0, 255)
-                    await producer.send(topic, payload, partition=partition)
-                    self._stats[-1]['count'] += 1
-            else:
-                for i in range(self._num // transaction_size):
+            if self._is_transactional:
+                for _ in range(self._num // transaction_size):
                     # payload[i % self._size] = random.randint(0, 255)
                     async with producer.transaction():
                         for _ in range(transaction_size):
                             await producer.send(
                                 topic, payload, partition=partition)
                             self._stats[-1]['count'] += 1
+            else:
+                for _ in range(self._num):
+                    # payload[i % self._size] = random.randint(0, 255)
+                    await producer.send(topic, payload, partition=partition)
+                    self._stats[-1]['count'] += 1
         except asyncio.CancelledError:
             pass
         finally:

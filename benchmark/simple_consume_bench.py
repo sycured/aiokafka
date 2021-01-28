@@ -58,8 +58,8 @@ class Benchmark:
         try:
             total_msgs = 0
 
-            if not self._use_iter:
-                while True:
+            while True:
+                if not self._use_iter:
                     msg_set = await consumer.getmany(timeout_ms=1000)
                     if not msg_set:
                         break
@@ -69,8 +69,7 @@ class Benchmark:
                         total_msgs += len_msgs
                     if total_msgs > self._num:
                         break
-            else:
-                while True:
+                else:
                     async for msg in consumer:
                         msg
                         self._stats[-1]['count'] += 1

@@ -402,12 +402,14 @@ class AIOKafkaConsumer(object):
                 self._client, self._subscription,
                 exclude_internal_topics=self._exclude_internal_topics)
 
-            if self._subscription.subscription is not None:
-                if self._subscription.partitions_auto_assigned():
-                    # Either we passed `topics` to constructor or `subscribe`
-                    # was called before `start`
-                    await self._client.force_metadata_update()
-                    self._coordinator.assign_all_partitions(check_unknown=True)
+            if (
+                self._subscription.subscription is not None
+                and self._subscription.partitions_auto_assigned()
+            ):
+                # Either we passed `topics` to constructor or `subscribe`
+                # was called before `start`
+                await self._client.force_metadata_update()
+                self._coordinator.assign_all_partitions(check_unknown=True)
 
     async def _wait_topics(self):
         if self._subscription.subscription is not None:
@@ -445,11 +447,10 @@ class AIOKafkaConsumer(object):
         self._client.set_topics([tp.topic for tp in partitions])
 
         # If called before `start` we will delegate this to `start` call
-        if self._coordinator is not None:
-            if self._group_id is not None:
-                # refresh commit positions for all assigned partitions
-                assignment = self._subscription.subscription.assignment
-                self._coordinator.start_commit_offsets_refresh_task(assignment)
+        if self._coordinator is not None and self._group_id is not None:
+            # refresh commit positions for all assigned partitions
+            assignment = self._subscription.subscription.assignment
+            self._coordinator.start_commit_offsets_refresh_task(assignment)
 
     def assignment(self):
         """ Get the set of partitions currently assigned to this consumer.
@@ -642,14 +643,14 @@ class AIOKafkaConsumer(object):
                     timeout=self._request_timeout_ms / 1000,
                     return_when=asyncio.FIRST_COMPLETED
                 )
-                if not tp_state.has_valid_position:
-                    if self._subscription.subscription is None:
-                        raise IllegalStateError(
-                            'Partition {} is not assigned'.format(partition))
-                    if self._subscription.subscription.assignment is None:
-                        self._coordinator.check_errors()
-                        await self._subscription.wait_for_assignment()
-                    continue
+            if not tp_state.has_valid_position:
+                if self._subscription.subscription is None:
+                    raise IllegalStateError(
+                        'Partition {} is not assigned'.format(partition))
+                if self._subscription.subscription.assignment is None:
+                    self._coordinator.check_errors()
+                    await self._subscription.wait_for_assignment()
+                continue
             return tp_state.position
 
     def highwater(self, partition):
@@ -760,7 +761,7 @@ class AIOKafkaConsumer(object):
         .. versionadded:: 0.3.0
 
         """
-        if not all([isinstance(p, TopicPartition) for p in partitions]):
+        if not all(isinstance(p, TopicPartition) for p in partitions):
             raise TypeError('partitions must be TopicPartition instances')
 
         if not partitions:
@@ -802,7 +803,7 @@ class AIOKafkaConsumer(object):
         .. versionadded:: 0.3.0
 
         """
-        if not all([isinstance(p, TopicPartition) for p in partitions]):
+        if not all(isinstance(p, TopicPartition) for p in partitions):
             raise TypeError('partitions must be TopicPartition instances')
 
         if not partitions:
@@ -849,7 +850,7 @@ class AIOKafkaConsumer(object):
             Changed ``AssertionError`` to ``IllegalStateError`` in case of
             unassigned partition
         """
-        if not all([isinstance(p, TopicPartition) for p in partitions]):
+        if not all(isinstance(p, TopicPartition) for p in partitions):
             raise TypeError('partitions must be TopicPartition instances')
 
         if not partitions:
@@ -1195,7 +1196,7 @@ class AIOKafkaConsumer(object):
         Arguments:
             *partitions (TopicPartition): Partitions to pause.
         """
-        if not all([isinstance(p, TopicPartition) for p in partitions]):
+        if not all(isinstance(p, TopicPartition) for p in partitions):
             raise TypeError('partitions must be TopicPartition namedtuples')
 
         for partition in partitions:
@@ -1217,7 +1218,7 @@ class AIOKafkaConsumer(object):
         Arguments:
             *partitions (TopicPartition): Partitions to resume.
         """
-        if not all([isinstance(p, TopicPartition) for p in partitions]):
+        if not all(isinstance(p, TopicPartition) for p in partitions):
             raise TypeError('partitions must be TopicPartition namedtuples')
 
         for partition in partitions:

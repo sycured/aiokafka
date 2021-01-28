@@ -322,7 +322,7 @@ class TestKafkaProducerIntegration(KafkaIntegrationTestCase):
 
         await producer.begin_transaction()
         futs = []
-        for i in range(10):
+        for _ in range(10):
             fut = await producer.send(self.topic, b"Super msg")
             futs.append(fut)
 

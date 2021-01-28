@@ -79,10 +79,7 @@ class TestSender(KafkaIntegrationTestCase):
 
         async def mocked_call(node_id):
             call_count[0] += 1
-            if call_count[0] == 1:
-                return False
-            else:
-                return True
+            return call_count[0] != 1
         sender._do_init_pid = mock.Mock(side_effect=mocked_call)
         return sender
 
@@ -122,10 +119,7 @@ class TestSender(KafkaIntegrationTestCase):
         async def ready(coordinator_id, group, *, count=[0]):
             c = count[0]
             count[0] += 1
-            if c == 0:
-                return False
-            else:
-                return True
+            return c != 0
         sender.client.ready = mock.Mock(side_effect=ready)
 
         node_id = await sender._find_coordinator(
@@ -353,7 +347,7 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = AddPartitionsToTxnResponse[0]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 errors=[
                     ("topic", [
@@ -365,7 +359,6 @@ class TestSender(KafkaIntegrationTestCase):
                     ])
                 ]
             )
-            return resp
 
         # Handle coordination errors
         for error_cls in [CoordinatorNotAvailableError, NotCoordinatorError]:
@@ -476,11 +469,10 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = AddOffsetsToTxnResponse[0]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 error_code=error_type.errno
             )
-            return resp
 
         # Handle coordination errors
         for error_cls in [CoordinatorNotAvailableError, NotCoordinatorError]:
@@ -599,7 +591,7 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = TxnOffsetCommitResponse[0]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 errors=[
                     ("topic", [
@@ -608,7 +600,6 @@ class TestSender(KafkaIntegrationTestCase):
                     ])
                 ]
             )
-            return resp
 
         # Handle coordination errors
         for error_cls in [
@@ -698,11 +689,10 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = EndTxnResponse[0]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 error_code=error_type.errno
             )
-            return resp
 
         # Handle coordination errors
         for error_cls in [CoordinatorNotAvailableError, NotCoordinatorError]:
@@ -766,7 +756,7 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = ProduceResponse[4]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 topics=[
                     ("my_topic", [
@@ -774,7 +764,6 @@ class TestSender(KafkaIntegrationTestCase):
                     ])
                 ]
             )
-            return resp
 
         # Special case for DuplicateSequenceNumber
         resp = create_response(NoError)
@@ -792,7 +781,7 @@ class TestSender(KafkaIntegrationTestCase):
 
         def create_response(error_type):
             cls = ProduceResponse[4]
-            resp = cls(
+            return cls(
                 throttle_time_ms=300,
                 topics=[
                     ("my_topic", [
@@ -800,7 +789,6 @@ class TestSender(KafkaIntegrationTestCase):
                     ])
                 ]
             )
-            return resp
 
         # Special case for DuplicateSequenceNumber
         resp = create_response(DuplicateSequenceNumber)

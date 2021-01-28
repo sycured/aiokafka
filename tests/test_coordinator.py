@@ -155,7 +155,7 @@ class TestKafkaCoordinatorIntegration(KafkaIntegrationTestCase):
         error_type = Errors.NoError
 
         async def send(*agrs, **kw):
-            resp = JoinGroupRequest.RESPONSE_TYPE(
+            return JoinGroupRequest.RESPONSE_TYPE(
                 error_code=error_type.errno,
                 generation_id=-1,  # generation_id
                 group_protocol="roundrobin",
@@ -163,7 +163,6 @@ class TestKafkaCoordinatorIntegration(KafkaIntegrationTestCase):
                 member_id="111",  # member_id
                 members=[]
             )
-            return resp
 
         mocked.send.side_effect = send
         subsc = subscription.subscription
@@ -267,11 +266,10 @@ class TestKafkaCoordinatorIntegration(KafkaIntegrationTestCase):
         error_type = None
 
         async def send(*agrs, **kw):
-            resp = SyncGroupResponse(
+            return SyncGroupResponse(
                 error_code=error_type.errno,
                 member_assignment=b"123"
             )
-            return resp
 
         mocked.send.side_effect = send
 
@@ -482,18 +480,15 @@ class TestKafkaCoordinatorIntegration(KafkaIntegrationTestCase):
             fetch_error = None
 
             async def mock_send_req(request):
-                if request.API_KEY == OffsetFetchRequest.API_KEY:
-                    if isinstance(fetch_error, list):
-                        error_code = fetch_error.pop(0).errno
-                    else:
-                        error_code = fetch_error.errno
-                    if error_code == Errors.NoError.errno:
-                        offset = 10
-                    else:
-                        offset = -1
-                    resp_topics = [("topic1", [(0, offset, "", error_code)])]
-                    return request.RESPONSE_TYPE(resp_topics)
-                return (await _orig_send_req(request))
+                if request.API_KEY != OffsetFetchRequest.API_KEY:
+                    return (await _orig_send_req(request))
+                if isinstance(fetch_error, list):
+                    error_code = fetch_error.pop(0).errno
+                else:
+                    error_code = fetch_error.errno
+                offset = 10 if error_code == Errors.NoError.errno else -1
+                resp_topics = [("topic1", [(0, offset, "", error_code)])]
+                return request.RESPONSE_TYPE(resp_topics)
             mocked.side_effect = mock_send_req
 
             # 0 partitions call should just fast return
@@ -874,9 +869,7 @@ class TestKafkaCoordinatorIntegration(KafkaIntegrationTestCase):
         client.force_metadata_update.side_effect = force_metadata_update
 
         async def ready(node_id, group=None):
-            if node_id == 0:
-                return True
-            return False
+            return node_id == 0
         client.ready.side_effect = ready
         client.coordinator_lookup = mock.Mock()
 

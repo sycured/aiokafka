@@ -61,8 +61,7 @@ def acl_manager(kafka_server, request):
     tag = image.split(":")[-1].replace('_', '-')
 
     from ._testutil import ACLManager
-    manager = ACLManager(kafka_server.container, tag)
-    return manager
+    return ACLManager(kafka_server.container, tag)
 
 
 @pytest.fixture(scope='class')
@@ -71,8 +70,7 @@ def kafka_config(kafka_server, request):
     tag = image.split(":")[-1].replace('_', '-')
 
     from ._testutil import KafkaConfig
-    manager = KafkaConfig(kafka_server.container, tag)
-    return manager
+    return KafkaConfig(kafka_server.container, tag)
 
 
 if sys.platform != 'win32':
