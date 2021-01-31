@@ -110,7 +110,7 @@ class Sender:
                     # AddPartitionsToTxnRequest and a ProduceRequest, so we
                     # mute the partition until added.
                     muted_partitions = (
-                        muted_partitions | txn_manager.partitions_to_add()
+                            muted_partitions | txn_manager.partitions_to_add()
                     )
                 batches, unknown_leaders_exist = \
                     self._message_accumulator.drain_by_nodes(
@@ -403,10 +403,10 @@ class InitPIDHandler(BaseHandler):
                 resp.producer_id, resp.producer_epoch)
             return
         elif (error_type is CoordinatorNotAvailableError or
-                error_type is NotCoordinatorError):
+              error_type is NotCoordinatorError):
             self._sender._coordinator_dead(CoordinationType.TRANSACTION)
         elif (error_type is CoordinatorLoadInProgressError or
-                error_type is ConcurrentTransactions):
+              error_type is ConcurrentTransactions):
             pass
         elif error_type is TransactionalIdAuthorizationFailed:
             raise error_type(txn_manager.transactional_id)
@@ -452,7 +452,7 @@ class AddPartitionsToTxnHandler(BaseHandler):
                     log.debug("Added partition %s to transaction", tp)
                     txn_manager.partition_added(tp)
                 elif (error_type is CoordinatorNotAvailableError or
-                        error_type is NotCoordinatorError):
+                      error_type is NotCoordinatorError):
                     self._sender._coordinator_dead(
                         CoordinationType.TRANSACTION)
                     return self._default_backoff
@@ -466,12 +466,12 @@ class AddPartitionsToTxnHandler(BaseHandler):
                     else:
                         return self._default_backoff
                 elif (error_type is CoordinatorLoadInProgressError or
-                        error_type is UnknownTopicOrPartitionError):
+                      error_type is UnknownTopicOrPartitionError):
                     return self._default_backoff
                 elif error_type is InvalidProducerEpoch:
                     raise ProducerFenced()
                 elif (error_type is InvalidProducerIdMapping or
-                        error_type is InvalidTxnState):
+                      error_type is InvalidTxnState):
                     raise error_type()
                 elif error_type is TopicAuthorizationFailedError:
                     unauthorized_topics.add(topic)
@@ -519,10 +519,10 @@ class AddOffsetsToTxnHandler(BaseHandler):
             txn_manager.consumer_group_added(group_id)
             return
         elif (error_type is CoordinatorNotAvailableError or
-                error_type is NotCoordinatorError):
+              error_type is NotCoordinatorError):
             self._sender._coordinator_dead(CoordinationType.TRANSACTION)
         elif (error_type is CoordinatorLoadInProgressError or
-                error_type is ConcurrentTransactions):
+              error_type is ConcurrentTransactions):
             # We will just retry after backoff
             pass
         elif error_type is InvalidProducerEpoch:
@@ -585,13 +585,13 @@ class TxnOffsetCommitHandler(BaseHandler):
                         offset, tp, group_id)
                     txn_manager.offset_committed(tp, offset, group_id)
                 elif (error_type is CoordinatorNotAvailableError or
-                        error_type is NotCoordinatorError or
-                        # Copied from Java. Not sure why it's only in this case
-                        error_type is RequestTimedOutError):
+                      error_type is NotCoordinatorError or
+                      # Copied from Java. Not sure why it's only in this case
+                      error_type is RequestTimedOutError):
                     self._sender._coordinator_dead(CoordinationType.GROUP)
                     return self._default_backoff
                 elif (error_type is CoordinatorLoadInProgressError or
-                        error_type is UnknownTopicOrPartitionError):
+                      error_type is UnknownTopicOrPartitionError):
                     # We will just retry after backoff
                     return self._default_backoff
                 elif error_type is InvalidProducerEpoch:
@@ -632,10 +632,10 @@ class EndTxnHandler(BaseHandler):
             txn_manager.complete_transaction()
             return
         elif (error_type is CoordinatorNotAvailableError or
-                error_type is NotCoordinatorError):
+              error_type is NotCoordinatorError):
             self._sender._coordinator_dead(CoordinationType.TRANSACTION)
         elif (error_type is CoordinatorLoadInProgressError or
-                error_type is ConcurrentTransactions):
+              error_type is ConcurrentTransactions):
             # We will just retry after backoff
             pass
         elif error_type is InvalidProducerEpoch:
@@ -775,5 +775,6 @@ class SendProduceReqHandler(BaseHandler):
             return False
         # XXX: remove unknown topic check as we fix
         #      https://github.com/dpkp/kafka-python/issues/1155
-        return bool(error.retriable or isinstance(error, UnknownTopicOrPartitionError)\
-                or error is UnknownTopicOrPartitionError)
+        return bool(
+            error.retriable or isinstance(error, UnknownTopicOrPartitionError)
+            or error is UnknownTopicOrPartitionError)
