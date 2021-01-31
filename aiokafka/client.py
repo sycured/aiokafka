@@ -181,9 +181,11 @@ class AIOKafkaClient:
             self._sync_task = None
         # Be careful to wait for graceful closure of all connections, so we
         # process all pending buffers.
-        futs = []
-        for conn in self._conns.values():
-            futs.append(conn.close(reason=CloseReason.SHUTDOWN))
+        futs = [
+            conn.close(reason=CloseReason.SHUTDOWN)
+            for conn in self._conns.values()
+        ]
+
         if futs:
             await asyncio.gather(*futs)
 
@@ -397,8 +399,10 @@ class AIOKafkaClient:
         """
         # Connection failures imply that our metadata is stale, so let's
         # refresh
-        if reason == CloseReason.CONNECTION_BROKEN or \
-                reason == CloseReason.CONNECTION_TIMEOUT:
+        if reason in [
+            CloseReason.CONNECTION_BROKEN,
+            CloseReason.CONNECTION_TIMEOUT,
+        ]:
             self.force_metadata_update()
 
     async def _get_conn(
@@ -467,9 +471,7 @@ class AIOKafkaClient:
 
     async def ready(self, node_id, *, group=ConnectionGroup.DEFAULT):
         conn = await self._get_conn(node_id, group=group)
-        if conn is None:
-            return False
-        return True
+        return conn is not None
 
     async def send(self, node_id, request, *, group=ConnectionGroup.DEFAULT):
         """Send a request to a specific node.

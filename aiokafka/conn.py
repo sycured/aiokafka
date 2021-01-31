@@ -750,8 +750,7 @@ class OAuthAuthenticator(BaseSaslAuthenticator):
                 getattr(self._sasl_oauth_token_provider, "extensions", None)):
             extensions = self._sasl_oauth_token_provider.extensions()
             if len(extensions) > 0:
-                msg = "\x01".join(
-                    ["{}={}".format(k, v) for k, v in extensions.items()])
+                msg = "\x01".join("{}={}".format(k, v) for k, v in extensions.items())
                 return "\x01" + msg
 
         return ""

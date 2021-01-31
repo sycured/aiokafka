@@ -149,11 +149,7 @@ class MessageBatch:
         tp = self._tp
         topic = tp.topic
         partition = tp.partition
-        if timestamp == -1:
-            timestamp_type = 0
-        else:
-            timestamp_type = 1
-
+        timestamp_type = 0 if timestamp == -1 else 1
         # Set main batch future
         if not self.future.done():
             self.future.set_result(_record_metadata_class(

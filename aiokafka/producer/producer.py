@@ -336,10 +336,7 @@ class AIOKafkaProducer(object):
         return (await self.client._wait_on_metadata(topic))
 
     def _serialize(self, topic, key, value):
-        if self._key_serializer:
-            serialized_key = self._key_serializer(key)
-        else:
-            serialized_key = key
+        serialized_key = self._key_serializer(key) if self._key_serializer else key
         if self._value_serializer:
             serialized_value = self._value_serializer(value)
         else:
@@ -419,8 +416,7 @@ class AIOKafkaProducer(object):
         """
         assert value is not None or self.client.api_version >= (0, 8, 1), (
             'Null messages require kafka >= 0.8.1')
-        assert not (value is None and key is None), \
-            'Need at least one: key or value'
+        assert value is not None or key is not None, 'Need at least one: key or value'
 
         # first make sure the metadata for the topic is available
         await self.client._wait_on_metadata(topic)

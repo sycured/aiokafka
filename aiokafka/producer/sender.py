@@ -69,10 +69,9 @@ class Sender:
         return self._sender_task
 
     async def close(self):
-        if self._sender_task is not None:
-            if not self._sender_task.done():
-                self._sender_task.cancel()
-                await self._sender_task
+        if self._sender_task is not None and not self._sender_task.done():
+            self._sender_task.cancel()
+            await self._sender_task
 
     async def _sender_routine(self):
         """ Background task, that sends pending batches to leader nodes for
@@ -131,11 +130,9 @@ class Sender:
                     # we have at least one unknown partition's leader,
                     # try to update cluster metadata and wait backoff time
                     fut = self.client.force_metadata_update()
-                    waiters |= tasks.union([fut])
                 else:
                     fut = self._message_accumulator.data_waiter()
-                    waiters |= tasks.union([fut])
-
+                waiters |= tasks.union([fut])
                 # wait when:
                 # * At least one of produce task is finished
                 # * Data for new partition arrived
@@ -373,11 +370,11 @@ class BaseHandler:
             return False
 
         retry_backoff = self.handle_response(resp)
-        if retry_backoff is not None:
-            await asyncio.sleep(retry_backoff)
-            return False  # Failure
-        else:
+        if retry_backoff is None:
             return True  # Success
+
+        await asyncio.sleep(retry_backoff)
+        return False  # Failure
 
     def create_request(self):
         raise NotImplementedError  # pragma: no cover
@@ -436,12 +433,11 @@ class AddPartitionsToTxnHandler(BaseHandler):
         for tp in self._tps:
             partition_data[tp.topic].append(tp.partition)
 
-        req = AddPartitionsToTxnRequest[0](
+        return AddPartitionsToTxnRequest[0](
             transactional_id=txn_manager.transactional_id,
             producer_id=txn_manager.producer_id,
             producer_epoch=txn_manager.producer_epoch,
             topics=list(partition_data.items()))
-        return req
 
     def handle_response(self, resp):
         txn_manager = self._sender._txn_manager
@@ -504,13 +500,12 @@ class AddOffsetsToTxnHandler(BaseHandler):
     def create_request(self):
         txn_manager = self._sender._txn_manager
 
-        req = AddOffsetsToTxnRequest[0](
+        return AddOffsetsToTxnRequest[0](
             transactional_id=txn_manager.transactional_id,
             producer_id=txn_manager.producer_id,
             producer_epoch=txn_manager.producer_epoch,
             group_id=self._group_id
         )
-        return req
 
     def handle_response(self, resp):
         txn_manager = self._sender._txn_manager
@@ -566,14 +561,13 @@ class TxnOffsetCommitHandler(BaseHandler):
                  offset.offset,
                  offset.metadata))
 
-        req = TxnOffsetCommitRequest[0](
+        return TxnOffsetCommitRequest[0](
             transactional_id=txn_manager.transactional_id,
             group_id=self._group_id,
             producer_id=txn_manager.producer_id,
             producer_epoch=txn_manager.producer_epoch,
             topics=list(offset_data.items())
         )
-        return req
 
     def handle_response(self, resp):
         txn_manager = self._sender._txn_manager
@@ -624,12 +618,11 @@ class EndTxnHandler(BaseHandler):
 
     def create_request(self):
         txn_manager = self._sender._txn_manager
-        req = EndTxnRequest[0](
+        return EndTxnRequest[0](
             transactional_id=txn_manager.transactional_id,
             producer_id=txn_manager.producer_id,
             producer_epoch=txn_manager.producer_epoch,
             transaction_result=self._commit_result)
-        return req
 
     def handle_response(self, resp):
         txn_manager = self._sender._txn_manager
@@ -690,12 +683,11 @@ class SendProduceReqHandler(BaseHandler):
             else:
                 kwargs['transactional_id'] = None
 
-        request = ProduceRequest[version](
+        return ProduceRequest[version](
             required_acks=self._sender._acks,
             timeout=self._sender._request_timeout_ms,
             topics=list(topics.items()),
             **kwargs)
-        return request
 
     async def do(self, node_id):
         request = self.create_request()
@@ -783,7 +775,5 @@ class SendProduceReqHandler(BaseHandler):
             return False
         # XXX: remove unknown topic check as we fix
         #      https://github.com/dpkp/kafka-python/issues/1155
-        if error.retriable or isinstance(error, UnknownTopicOrPartitionError)\
-                or error is UnknownTopicOrPartitionError:
-            return True
-        return False
+        return bool(error.retriable or isinstance(error, UnknownTopicOrPartitionError)\
+                or error is UnknownTopicOrPartitionError)

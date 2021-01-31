@@ -504,29 +504,28 @@ class _DefaultRecordBatchBuilderPy(DefaultRecordBase):
         struct.pack_into(">I", self._buffer, self.CRC_OFFSET, crc)
 
     def _maybe_compress(self):
-        if self._compression_type != self.CODEC_NONE:
-            header_size = self.HEADER_STRUCT.size
-            data = bytes(self._buffer[header_size:])
-            if self._compression_type == self.CODEC_GZIP:
-                compressed = gzip_encode(data)
-            elif self._compression_type == self.CODEC_SNAPPY:
-                compressed = snappy_encode(data)
-            elif self._compression_type == self.CODEC_LZ4:
-                compressed = lz4_encode(data)
-            elif self._compression_type == self.CODEC_ZSTD:
-                compressed = zstd_encode(data)
-            compressed_size = len(compressed)
-            if len(data) <= compressed_size:
-                # We did not get any benefit from compression, lets send
-                # uncompressed
-                return False
-            else:
-                # Trim bytearray to the required size
-                needed_size = header_size + compressed_size
-                del self._buffer[needed_size:]
-                self._buffer[header_size:needed_size] = compressed
-                return True
-        return False
+        if self._compression_type == self.CODEC_NONE:
+            return False
+        header_size = self.HEADER_STRUCT.size
+        data = bytes(self._buffer[header_size:])
+        if self._compression_type == self.CODEC_GZIP:
+            compressed = gzip_encode(data)
+        elif self._compression_type == self.CODEC_SNAPPY:
+            compressed = snappy_encode(data)
+        elif self._compression_type == self.CODEC_LZ4:
+            compressed = lz4_encode(data)
+        elif self._compression_type == self.CODEC_ZSTD:
+            compressed = zstd_encode(data)
+        compressed_size = len(compressed)
+        if len(data) <= compressed_size:
+            # We did not get any benefit from compression, lets send
+            # uncompressed
+            return False
+        # Trim bytearray to the required size
+        needed_size = header_size + compressed_size
+        del self._buffer[needed_size:]
+        self._buffer[header_size:needed_size] = compressed
+        return True
 
     def build(self):
         send_compressed = self._maybe_compress()

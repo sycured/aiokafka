@@ -115,8 +115,7 @@ def decode_varint_py(buffer, pos=0):
 def calc_crc32c_py(memview):
     """ Calculate CRC-32C (Castagnoli) checksum over a memoryview of data
     """
-    crc = crc32c_py(memview)
-    return crc
+    return crc32c_py(memview)
 
 
 if NO_EXTENSIONS:
