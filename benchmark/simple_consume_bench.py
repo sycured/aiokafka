@@ -1,7 +1,8 @@
-import argparse
+from argparse import ArgumentParser
 import signal
 
-import asyncio
+from asyncio import sleep, get_event_loop, set_event_loop_policy, run, \
+    CancelledError
 from aiokafka import AIOKafkaConsumer
 from collections import Counter
 
@@ -17,35 +18,30 @@ class Benchmark:
         self._use_iter = args.use_iter
 
     async def _stats_report(self, start):
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
         interval = self._stats_interval
         i = 1
         try:
             while True:
-                await asyncio.sleep(
+                await sleep(
                     (start + i * interval) - loop.time())
                 stats = self._stats[-1]
                 self._stats.append(Counter())
                 i += 1
                 print(
-                    "Consumed {stats[count]} messages in {interval} second(s)."
-                    .format(stats=stats, interval=interval)
+                    f"Consumed {stats['count']} messages "
+                    f"in {interval} second(s)."
                 )
-        except asyncio.CancelledError:
+        except CancelledError:
             stats = sum(self._stats, Counter())
             total_time = loop.time() - start
-            print(
-                "Total consumed {stats[count]} messages in "
-                "{time:.2f} second(s). Avg {avg} m/s.".format(
-                    stats=stats,
-                    time=total_time,
-                    avg=stats['count'] // total_time
-                )
-            )
+            print(f"Total consumed {stats['count']} messages "
+                  f"in {total_time:.2f} second(s). "
+                  f"Avg {stats['count'] // total_time} m/s.")
 
     async def bench_simple(self):
         topic = self._topic
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
 
         consumer = AIOKafkaConsumer(
             topic, group_id="test_group", auto_offset_reset="earliest",
@@ -77,7 +73,7 @@ class Benchmark:
                         if total_msgs > self._num:
                             break
 
-        except asyncio.CancelledError:
+        except CancelledError:
             pass
         finally:
             await consumer.stop()
@@ -86,7 +82,7 @@ class Benchmark:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description='Benchmark for maximum throughput to broker on consume. '
                     'Topic should already contain messages. Those can be '
                     'populated using produce benchmark.')
@@ -112,9 +108,9 @@ def main():
     args = parse_args()
     if args.uvloop:
         import uvloop
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        set_event_loop_policy(uvloop.EventLoopPolicy())
 
-    asyncio.run(Benchmark(args).bench_simple())
+    run(Benchmark(args).bench_simple())
 
 
 if __name__ == "__main__":

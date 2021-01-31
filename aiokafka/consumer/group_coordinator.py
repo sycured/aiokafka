@@ -399,7 +399,7 @@ class GroupCoordinator(BaseCoordinator):
     ):
         assignor = self._lookup_assignor(assignment_strategy)
         assert assignor, \
-            'Invalid assignment protocol: %s' % assignment_strategy
+            f'Invalid assignment protocol: {assignment_strategy}'
         member_metadata = {}
         all_subscribed_topics = set()
         for member_id, metadata_bytes in members:
@@ -437,7 +437,7 @@ class GroupCoordinator(BaseCoordinator):
         member_assignment_bytes
     ):
         assignor = self._lookup_assignor(protocol)
-        assert assignor, 'invalid assignment protocol: %s' % protocol
+        assert assignor, f'invalid assignment protocol: {protocol}'
 
         assignment = ConsumerProtocol.ASSIGNMENT.decode(
             member_assignment_bytes)
@@ -555,7 +555,7 @@ class GroupCoordinator(BaseCoordinator):
             log.error(
                 "Unexpected error in coordinator routine", exc_info=True)
             kafka_exc = Errors.KafkaError(
-                "Unexpected error during coordination {!r}".format(exc))
+                f"Unexpected error during coordination {exc!r}")
             self._subscription.abort_waiters(kafka_exc)
             raise kafka_exc
 
@@ -808,8 +808,7 @@ class GroupCoordinator(BaseCoordinator):
             raise error_type(self.group_id)
         else:
             err = Errors.KafkaError(
-                "Unexpected exception in heartbeat task: {!r}".format(
-                    error_type()))
+                f"Unexpected exception in heartbeat task: {error_type()!r}")
             log.error("Heartbeat failed: %r", err)
             raise err
         return False
@@ -1343,7 +1342,7 @@ class CoordinatorGroupRebalance:
         log.debug(
             "Sending leader SyncGroup for group %s to coordinator %s: %s",
             self.group_id, self.coordinator_id, request)
-        return (await self._send_sync_group_request(request))
+        return await self._send_sync_group_request(request)
 
     async def _send_sync_group_request(self, request):
         # We need to reset the rejoin future right after the assignment to

@@ -158,7 +158,7 @@ class AIOKafkaClient:
         return self._get_conn_lock_value
 
     def __repr__(self):
-        return '<AIOKafkaClient client_id=%s>' % self._client_id
+        return f'<AIOKafkaClient client_id={self._client_id}>'
 
     @property
     def api_version(self):
@@ -248,7 +248,7 @@ class AIOKafkaClient:
             break
         else:
             raise KafkaConnectionError(
-                'Unable to bootstrap from {}'.format(self.hosts))
+                f'Unable to bootstrap from {self.hosts}')
 
         # detect api version if need
         if self._api_version == 'auto':
@@ -427,7 +427,7 @@ class AIOKafkaClient:
                 # I think requerying metadata should solve this problem
                 if broker is None:
                     raise StaleMetadata(
-                        'Broker id %s not in current metadata' % node_id)
+                        f'Broker id {node_id} not in current metadata')
             else:
                 broker = self.cluster.coordinator_metadata(node_id)
                 assert broker is not None
@@ -491,8 +491,8 @@ class AIOKafkaClient:
         """
         if not (await self.ready(node_id, group=group)):
             raise NodeNotReadyError(
-                "Attempt to send a request to node"
-                " which is not ready (node id {}).".format(node_id))
+                f"Attempt to send a request to node"
+                f" which is not ready (node id {node_id}).")
 
         # Every request gets a response, except one special case:
         expect_response = True
@@ -546,12 +546,12 @@ class AIOKafkaClient:
         conn = await self._get_conn(node_id, no_hint=True)
         if conn is None:
             raise KafkaConnectionError(
-                "No connection to node with id {}".format(node_id))
+                f"No connection to node with id {node_id}")
         for version, request in test_cases:
             try:
                 if not conn.connected():
                     await conn.connect()
-                assert conn, 'no connection to node with id {}'.format(node_id)
+                assert conn, f'no connection to node with id {node_id}'
                 # request can be ignored by Kafka broker,
                 # so we send metadata request and wait response
                 task = create_task(conn.send(request))

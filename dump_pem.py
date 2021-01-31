@@ -34,9 +34,9 @@ def get_parser():
 def format_pem(der_bytes, crt_type):
     data = textwrap.wrap(base64.b64encode(der_bytes).decode('ascii'), 64)
     res = "\r\n".join([
-        "-----BEGIN %s-----" % crt_type,
+        f"-----BEGIN {crt_type}-----",
         "\r\n".join(data),
-        "-----END %s-----" % crt_type,
+        f"-----END {crt_type}-----",
     ])
     res += "\r\n"
     return res
@@ -62,7 +62,7 @@ def main():
     else:
 
         def write(file, data):
-            print("File {}".format(file))
+            print(f"File {file}")
             print(data)
 
     ks = jks.KeyStore.load(str(args.jks), args.jks_pass)
@@ -76,7 +76,7 @@ def main():
             ks.entries[host].decrypt(password)
 
     for alias, pk in ks.private_keys.items():
-        print("Exporting private key: %s" % alias)
+        print(f"Exporting private key: {alias}")
         if pk.algorithm_oid == jks.util.RSA_ENCRYPTION_OID:
             data = format_pem(pk.pkey, "RSA PRIVATE KEY")
             write(alias + '.key', data)
@@ -89,7 +89,7 @@ def main():
         write(alias + '.crt', data)
 
     for alias, c in ks.certs.items():
-        print("Certificate: %s" % c.alias)
+        print(f"Certificate: {c.alias}")
         data = format_pem(c.cert, "CERTIFICATE")
         write(alias + '.crt', data)
 

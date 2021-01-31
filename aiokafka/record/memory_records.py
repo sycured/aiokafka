@@ -84,8 +84,8 @@ class _MemoryRecordsPy:
             return None
         if len(next_slice) < _min_slice:
             raise CorruptRecordException(
-                "Record size is less than the minimum record overhead "
-                "({})".format(_min_slice - self.LOG_OVERHEAD))
+                f"Record size is less than the minimum record overhead "
+                f"({_min_slice - self.LOG_OVERHEAD})")
         self._cache_next()
         magic = next_slice[_magic_offset]
         if magic >= 2:  # pragma: no cover

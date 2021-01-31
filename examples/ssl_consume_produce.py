@@ -11,6 +11,7 @@ context = create_ssl_context(
     password="123123"
 )
 
+
 async def produce_and_consume():
     # Produce
     producer = AIOKafkaProducer(

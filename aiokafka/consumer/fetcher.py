@@ -52,7 +52,7 @@ class OffsetResetStrategy:
         if value == cls.NONE:
             return "none"
         else:
-            return "timestamp({})".format(value)
+            return f"timestamp({value})"
 
 
 class FetchResult:
@@ -144,8 +144,7 @@ class FetchResult:
         return self._partition_records is not None
 
     def __repr__(self):
-        return "<FetchResult position={!r}>".format(
-            self._partition_records.next_fetch_offset)
+        return f"<FetchResult position={self._partition_records.next_fetch_offset!r}>"
 
 
 class FetchError:
@@ -165,7 +164,7 @@ class FetchError:
         raise self._error
 
     def __repr__(self):
-        return "<FetchError error={!r}>".format(self._error)
+        return f"<FetchError error={self._error!r}>"
 
 
 class PartitionRecords:
@@ -212,7 +211,7 @@ class PartitionRecords:
                 # This iterator will be closed after the exception, so we don't
                 # try to drain other batches here. They will be refetched.
                 raise Errors.CorruptRecordException(
-                    "Invalid CRC - {tp}".format(tp=tp))
+                    f"Invalid CRC - {tp}")
 
             if self._isolation_level == READ_COMMITTED and \
                     next_batch.producer_id is not None:
@@ -389,7 +388,7 @@ class Fetcher:
             self._isolation_level = READ_COMMITTED
         else:
             raise ValueError(
-                "Incorrect isolation level {}".format(isolation_level))
+                f"Incorrect isolation level {isolation_level}")
 
         self._records = collections.OrderedDict()
         self._in_flight = set()
@@ -889,7 +888,7 @@ class Fetcher:
             else:
                 return offsets
         raise KafkaTimeoutError(
-            "Failed to get offsets by times in %s ms" % timeout_ms)
+            f"Failed to get offsets by times in {timeout_ms} ms")
 
     async def _proc_offset_requests(self, timestamps):
         """ Fetch offsets for each partition in timestamps dict. This may send
@@ -983,8 +982,8 @@ class Fetcher:
                               "0.10.0", partition)
                 elif error_type is Errors.NotLeaderForPartitionError:
                     log.debug(
-                        "Attempt to fetch offsets for partition %s ""failed "
-                        "due to obsolete leadership information, retrying.",
+                        "Attempt to fetch offsets for partition %s failed due "
+                        "to obsolete leadership information, retrying.",
                         partition)
                     raise error_type(partition)
                 elif error_type is Errors.UnknownTopicOrPartitionError:

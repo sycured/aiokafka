@@ -1,5 +1,6 @@
-import argparse
-import asyncio
+from argparse import ArgumentParser
+from asyncio import sleep, get_event_loop, set_event_loop_policy, run, \
+    CancelledError
 import signal
 from aiokafka import AIOKafkaProducer
 from collections import Counter
@@ -33,37 +34,32 @@ class Benchmark:
         self._stats = [Counter()]
 
     async def _stats_report(self, start):
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
         interval = self._stats_interval
         i = 1
         try:
             while True:
-                await asyncio.sleep(
+                await sleep(
                     (start + i * interval) - loop.time())
                 stats = self._stats[-1]
                 self._stats.append(Counter())
                 i += 1
                 print(
-                    "Produced {stats[count]} messages in {interval} second(s)."
-                    .format(stats=stats, interval=interval)
+                    f"Produced {stats['count']} messages "
+                    f"in {interval} second(s)."
                 )
-        except asyncio.CancelledError:
+        except CancelledError:
             stats = sum(self._stats, Counter())
             total_time = loop.time() - start
-            print(
-                "Total produced {stats[count]} messages in "
-                "{time:.2f} second(s). Avg {avg} m/s".format(
-                    stats=stats,
-                    time=total_time,
-                    avg=stats['count'] // total_time
-                )
-            )
+            print(f"Total produced {stats['count']} messages in "
+                  f"{total_time:.2f} second(s). "
+                  f"Avg {stats['count'] // total_time} m/s")
 
     async def bench_simple(self):
         payload = bytearray(b"m" * self._size)
         topic = self._topic
         partition = self._partition
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
 
         producer = AIOKafkaProducer(**self._producer_kwargs)
         await producer.start()
@@ -86,7 +82,7 @@ class Benchmark:
                     # payload[i % self._size] = random.randint(0, 255)
                     await producer.send(topic, payload, partition=partition)
                     self._stats[-1]['count'] += 1
-        except asyncio.CancelledError:
+        except CancelledError:
             pass
         finally:
             await producer.stop()
@@ -95,7 +91,7 @@ class Benchmark:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description='Benchmark for maximum throughput to broker on produce')
     parser.add_argument(
         '-b', '--broker-list', default="localhost:9092",
@@ -137,9 +133,9 @@ def main():
     args = parse_args()
     if args.uvloop:
         import uvloop
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        set_event_loop_policy(uvloop.EventLoopPolicy())
 
-    asyncio.run(Benchmark(args).bench_simple())
+    run(Benchmark(args).bench_simple())
 
 
 if __name__ == "__main__":

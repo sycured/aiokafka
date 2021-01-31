@@ -208,8 +208,8 @@ class AIOKafkaProducer(object):
         if compression_type:
             checker, compression_attrs = self._COMPRESSORS[compression_type]
             if not checker():
-                raise RuntimeError("Compression library for {} not found"
-                                   .format(compression_type))
+                raise RuntimeError(
+                    f"Compression library for {compression_type} not found")
         else:
             compression_attrs = 0
 
@@ -223,8 +223,7 @@ class AIOKafkaProducer(object):
                 acks = -1
             elif acks not in ('all', -1):
                 raise ValueError(
-                    "acks={} not supported if enable_idempotence=True"
-                    .format(acks))
+                    f"acks={acks} not supported if enable_idempotence=True")
             self._txn_manager = TransactionManager(
                 transactional_id, transaction_timeout_ms)
         else:
@@ -237,8 +236,8 @@ class AIOKafkaProducer(object):
 
         AIOKafkaProducer._PRODUCER_CLIENT_ID_SEQUENCE += 1
         if client_id is None:
-            client_id = 'aiokafka-producer-%s' % \
-                AIOKafkaProducer._PRODUCER_CLIENT_ID_SEQUENCE
+            client_id = f'aiokafka-producer-' \
+                        f'{AIOKafkaProducer._PRODUCER_CLIENT_ID_SEQUENCE}'
 
         self._key_serializer = key_serializer
         self._value_serializer = value_serializer
@@ -278,7 +277,7 @@ class AIOKafkaProducer(object):
     # We don't attempt to close the Consumer, as __del__ is synchronous
     def __del__(self, _warnings=warnings):
         if self._closed is False:
-            _warnings.warn("Unclosed AIOKafkaProducer {!r}".format(self),
+            _warnings.warn(f"Unclosed AIOKafkaProducer {self!r}",
                            ResourceWarning,
                            source=self)
             context = {'producer': self,
@@ -333,7 +332,7 @@ class AIOKafkaProducer(object):
 
     async def partitions_for(self, topic):
         """Returns set of all known partitions for the topic."""
-        return (await self.client._wait_on_metadata(topic))
+        return await self.client._wait_on_metadata(topic)
 
     def _serialize(self, topic, key, value):
         serialized_key = self._key_serializer(key) if self._key_serializer else key
@@ -350,9 +349,9 @@ class AIOKafkaProducer(object):
             message_size += len(serialized_value)
         if message_size > self._max_request_size:
             raise MessageSizeTooLargeError(
-                "The message is %d bytes when serialized which is larger than"
-                " the maximum request size you have configured with the"
-                " max_request_size configuration" % message_size)
+                f"The message is {message_size:d} bytes when serialized "
+                f"which is larger than the maximum request size you have "
+                f"configured with the max_request_size configuration")
 
         return serialized_key, serialized_value
 
@@ -456,7 +455,7 @@ class AIOKafkaProducer(object):
         """Publish a message to a topic and wait the result"""
         future = await self.send(
             topic, value, key, partition, timestamp_ms, headers)
-        return (await future)
+        return await future
 
     def create_batch(self):
         """Create and return an empty BatchBuilder.

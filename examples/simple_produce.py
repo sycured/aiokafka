@@ -1,9 +1,9 @@
 from aiokafka import AIOKafkaProducer
 import asyncio
 
+
 async def send_one():
-    producer = AIOKafkaProducer(
-        bootstrap_servers='localhost:9092')
+    producer = AIOKafkaProducer(bootstrap_servers='localhost:9092')
     # Get cluster layout and topic/partition allocation
     await producer.start()
     while True:

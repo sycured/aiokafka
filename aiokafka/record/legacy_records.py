@@ -209,8 +209,9 @@ class _LegacyRecordBatchPy(LegacyRecordBase):
                 offset, _, crc, _, attrs, timestamp = header
                 # There should only ever be a single layer of compression
                 assert not attrs & self.CODEC_MASK, (
-                    'MessageSet at offset %d appears double-compressed. This '
-                    'should not happen -- check your producers!' % offset)
+                    f'MessageSet at offset {offset:d} appears '
+                    f'double-compressed. This should not happen -- check '
+                    f'your producers!')
 
                 # When magic value is greater than 0, the timestamp
                 # of a compressed message depends on the
@@ -283,10 +284,10 @@ class _LegacyRecordPy:
 
     def __repr__(self):
         return (
-            "LegacyRecord(offset={!r}, timestamp={!r}, timestamp_type={!r},"
-            " key={!r}, value={!r}, crc={!r})".format(
-                self._offset, self._timestamp, self._timestamp_type,
-                self._key, self._value, self._crc)
+            f"LegacyRecord(offset={self._offset!r}, "
+            f"timestamp={self._timestamp!r}, "
+            f"timestamp_type={self._timestamp_type!r}, key={self._key!r}, "
+            f"value={self._value!r}, crc={self._crc!r})"
         )
 
 
@@ -335,9 +336,9 @@ class _LegacyRecordBatchBuilderPy(LegacyRecordBase):
             if type(timestamp) != int:
                 raise TypeError(timestamp)
             if not isinstance(key, (bytes, bytearray, memoryview, NoneType)):
-                raise TypeError("Unsupported type for key: %s" % type(key))
+                raise TypeError(f"Unsupported type for key: {type(key)}")
             if not isinstance(value, (bytes, bytearray, memoryview, NoneType)):
-                raise TypeError("Unsupported type for value: %s" % type(value))
+                raise TypeError(f"Unsupported type for value: {type(value)}")
             raise
 
     def _encode_msg(self, buf, offset, timestamp, key_size, key,
@@ -447,7 +448,7 @@ class _LegacyRecordBatchBuilderPy(LegacyRecordBase):
         try:
             return cls.RECORD_OVERHEAD[magic]
         except KeyError:
-            raise ValueError("Unsupported magic: %d" % magic)
+            raise ValueError(f"Unsupported magic: {magic:d}")
 
 
 class _LegacyRecordMetadataPy:
@@ -478,9 +479,8 @@ class _LegacyRecordMetadataPy:
 
     def __repr__(self):
         return (
-            "LegacyRecordMetadata(offset={!r}, crc={!r}, size={!r},"
-            " timestamp={!r})".format(
-                self._offset, self._crc, self._size, self._timestamp)
+            f"LegacyRecordMetadata(offset={self._offset!r}, crc={self._crc!r}, "
+            f"size={self._size!r}, timestamp={self._timestamp!r})"
         )
 
 

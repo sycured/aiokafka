@@ -2,10 +2,10 @@
 import perf
 from aiokafka.producer.message_accumulator import BatchBuilder
 from aiokafka.record.memory_records import MemoryRecords
-import itertools
-import random
-import hashlib
-import os
+from itertools import cycle
+from random import randint
+from hashlib import sha256
+from os import devnull
 
 
 DEFAULT_BATCH_SIZE = 1600 * 1024
@@ -21,7 +21,7 @@ MESSAGES_PER_BATCH = 100
 def random_bytes(length):
     buffer = bytearray(length)
     for i in range(length):
-        buffer[i] = random.randint(0, 255)
+        buffer[i] = randint(0, 255)
     return bytes(buffer)
 
 
@@ -30,7 +30,7 @@ def prepare(magic: int):
     for _ in range(BATCH_SAMPLES):
         batch = BatchBuilder(
             magic, batch_size=DEFAULT_BATCH_SIZE, compression_type=0)
-        for offset in range(MESSAGES_PER_BATCH):
+        for _ in range(MESSAGES_PER_BATCH):
             size = batch.append(
                 timestamp=None,  # random.randint(*TIMESTAMP_RANGE)
                 key=random_bytes(KEY_SIZE),
@@ -38,16 +38,16 @@ def prepare(magic: int):
             assert size
         samples.append(bytes(batch._builder.build()))
 
-    return iter(itertools.cycle(samples))
+    return iter(cycle(samples))
 
 
 def finalize(results):
     # Just some strange code to make sure PyPy does execute the code above
     # properly
-    hash_val = hashlib.md5()
+    hash_val = sha256()
     for buf in results:
         hash_val.update(buf)
-    print(hash_val, file=open(os.devnull, "w"))
+    print(hash_val, file=open(devnull, "w"))
 
 
 def func(loops: int, magic: int):

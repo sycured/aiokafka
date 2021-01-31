@@ -120,7 +120,7 @@ class SubscriptionState:
         tp_state = self._subscription.assignment.state_value(tp)
         if tp_state is None:
             raise IllegalStateError(
-                "No current assignment for partition {}".format(tp))
+                f"No current assignment for partition {tp}")
         return tp_state
 
     def _notify_subscription_waiters(self):
@@ -343,7 +343,7 @@ class Subscription:
     def _assign(self, topic_partitions: Iterable[TopicPartition]):
         for tp in topic_partitions:
             assert tp.topic in self._topics, \
-                "Received an assignment for unsubscribed topic: %s" % (tp, )
+                f"Received an assignment for unsubscribed topic: {tp}"
 
         if self._assignment is not None:
             self._assignment._unassign()
@@ -577,5 +577,5 @@ class TopicPartitionState(object):
             self._resume_fut = None
 
     def __repr__(self):
-        return "TopicPartitionState<Status={} position={}>".format(
-            self._status, self._position)
+        return f"TopicPartitionState<Status={self._status} " \
+               f"position={self._position}>"
