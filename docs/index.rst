@@ -1,7 +1,7 @@
 Welcome to aiokafka's documentation!
 ====================================
 
-.. _GitHub: https://github.com/aio-libs/aiokafka
+.. _GitHub: https://github.com/sycured/aiokafka
 .. _kafka-python: https://github.com/dpkp/kafka-python
 .. _asyncio: http://docs.python.org/3.7/library/asyncio.html
 
@@ -10,7 +10,7 @@ Welcome to aiokafka's documentation!
 .. image:: https://img.shields.io/pypi/pyversions/aiokafka.svg
     :target: https://pypi.python.org/pypi/aiokafka
 .. image:: https://img.shields.io/badge/license-Apache%202-blue.svg
-    :target: https://github.com/aio-libs/aiokafka/blob/master/LICENSE
+    :target: https://github.com/sycured/aiokafka/blob/master/LICENSE
 
 **aiokafka** is a client for the Apache Kafka distributed stream processing system using asyncio_.
 It is based on the kafka-python_ library and reuses its internals for protocol parsing, errors, etc.

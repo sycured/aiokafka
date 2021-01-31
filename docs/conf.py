@@ -85,7 +85,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'aiokafka'
-copyright = '2015-2017, Aio-libs contributors'
+copyright = '2021, sycured'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -139,7 +139,7 @@ html_theme = "alabaster"
 
 html_theme_options = {
     'description': 'Apache Kafka client for asyncio',
-    'github_user': 'aio-libs',
+    'github_user': 'sycured',
     'github_repo': 'aiokafka',
     'github_button': False,
     'github_banner': True,

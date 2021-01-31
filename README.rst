@@ -1,16 +1,22 @@
 aiokafka
 ========
-.. image:: https://travis-ci.com/aio-libs/aiokafka.svg?branch=master
-    :target: https://travis-ci.com/aio-libs/aiokafka
+.. image:: https://github.com/sycured/aiokafka/workflows/Tests/badge.svg
+    :target: https://github.com/sycured/aiokafka/actions
     :alt: |Build status|
-.. image:: https://codecov.io/github/aio-libs/aiokafka/coverage.svg?branch=master
-    :target: https://codecov.io/gh/aio-libs/aiokafka/branch/master
+.. image:: https://codecov.io/github/sycured/aiokafka/coverage.svg?branch=main
+    :target: https://codecov.io/gh/sycured/aiokafka/branch/main
     :alt: |Coverage|
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-    :target: https://gitter.im/aio-libs/Lobby
-    :alt: |Chat on Gitter|
+.. image:: https://sonarcloud.io/api/project_badges/measure?project=sycured_aiokafka&metric=alert_status
+    :target: https://sonarcloud.io/dashboard?id=sycured_aiokafka
+    :alt: |Quality Gate Status|
+.. image:: https://sonarcloud.io/api/project_badges/measure?project=sycured_aiokafka&metric=sqale_rating
+    :target: https://sonarcloud.io/dashboard?id=sycured_aiokafka)
+    :alt: |Maintainability Rating|
+.. image:: https://sonarcloud.io/api/project_badges/measure?project=sycured_aiokafka&metric=security_rating
+    :target: https://sonarcloud.io/dashboard?id=sycured_aiokafka
+    :alt: |Security Rating|
 
-asyncio client for Kafka
+asyncio client for Kafka - HARD FORK from aio-libs/aiokafka
 
 
 AIOKafkaProducer
