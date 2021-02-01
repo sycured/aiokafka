@@ -224,7 +224,7 @@ cdef class DefaultRecordBatch:
                 if compression_type == _ATTR_CODEC_LZ4:
                     uncompressed = lz4_decode(data.tobytes())
                 if compression_type == _ATTR_CODEC_ZSTD:
-                    uncompressed = zstd_decode(data)
+                    uncompressed = zstd_decode(data.tobytes())
         
                 PyBuffer_Release(&self._buffer)
                 PyObject_GetBuffer(uncompressed, &self._buffer, PyBUF_SIMPLE)

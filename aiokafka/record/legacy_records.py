@@ -146,7 +146,7 @@ class _LegacyRecordBatchPy(LegacyRecordBase):
             else:
                 uncompressed = lz4_decode(data.tobytes())
         elif compression_type == self.CODEC_ZSTD:
-            uncompressed = zstd_decode(data)
+            uncompressed = zstd_decode(data.tobytes())
         return uncompressed
 
     def _read_header(self, pos):
