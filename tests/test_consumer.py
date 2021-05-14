@@ -309,7 +309,7 @@ class TestConsumerIntegration(KafkaIntegrationTestCase):
         consumer = await self.consumer_factory()
         expected_messages = set(small_messages + large_messages)
         actual_messages = []
-        for i in range(20):
+        for _ in range(20):
             m = await consumer.getone()
             actual_messages.append(m)
         actual_messages = {m.value for m in actual_messages}
@@ -1209,7 +1209,7 @@ class TestConsumerIntegration(KafkaIntegrationTestCase):
             for _ in range(2):
                 await consumer.getmany(timeout_ms=1000)
         with self.assertRaises(NoOffsetForPartitionError):
-            for x in range(2):
+            for _ in range(2):
                 await consumer.getone()
 
         consumer.seek(tp, 19999)
@@ -2016,7 +2016,7 @@ class TestConsumerIntegration(KafkaIntegrationTestCase):
         loop = get_running_loop()
         start_time = loop.time()
         seen = []
-        for i in range(20):
+        for _ in range(20):
             msg = await consumer2.getone()
             seen.append(int(msg.value))
 
@@ -2030,6 +2030,6 @@ class TestConsumerIntegration(KafkaIntegrationTestCase):
         await self.send_messages(0, list(range(20, 30)))
         await self.send_messages(1, list(range(30, 40)))
 
-        for i in range(10):
+        for _ in range(10):
             msg = await consumer1.getone()
             self.assertGreaterEqual(int(msg.value), 20)
